@@ -1,75 +1,49 @@
 {% extends "base.html" %}
 
 {% block content %}
-<div class="card">
-  <h2>{{ event['title'] }}</h2>
-  <div class="muted">日程: {{ event['event_date'] }}</div>
-  {% if event['recruitment_deadline'] %}
-    <div class="muted">募集締め切り: {{ event['recruitment_deadline'].split('-')[1] }}月{{ event['recruitment_deadline'].split('-')[2] }}日</div>
-  {% endif %}
-  <p>{{ event['summary']|replace('\n', '<br>')|safe }}</p>
-
-  {% if current_user and event['created_by_user_id'] == current_user['id'] %}
-  <div class="actions" style="margin-bottom: 12px;">
-    <a class="btn btn-secondary" href="{{ url_for('events.edit_event', event_id=event['id']) }}">イベントを編集</a>
-
-    <form method="post" action="{{ url_for('events.toggle_event_close', event_id=event['id']) }}" class="inline-form">
-      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
-      {% if event['is_closed'] %}
-        <button class="btn btn-secondary" type="submit">募集を再開</button>
-      {% else %}
-        <button class="btn btn-secondary" type="submit">募集を締め切る</button>
-      {% endif %}
-    </form>
-
-    <form method="post" action="{{ url_for('events.delete_event', event_id=event['id']) }}" class="inline-form" onsubmit="return confirm('このイベントを削除します。参加表明もすべて消えます。よろしいですか？');">
-      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
-      <button class="btn btn-danger" type="submit">イベントを削除</button>
-    </form>
-  </div>
-  {% endif %}
-
-  <div class="meta">
-    {% if event['is_closed'] %}
-      <span class="chip chip-danger">募集締切</span>
-    {% else %}
-      <span class="chip chip-ok">募集中</span>
-    {% endif %}
-    <span class="chip">参加 {{ stats['participant_count'] }}人</span>
-    <span class="chip">車の空き <strong>あと {{ stats['available_seats'] }}人</strong> / 合計 {{ stats['total_seats'] }}人分</span>
-    <span class="chip">車出し {{ stats['driver_count'] }}人</span>
-  </div>
-</div>
-
+<!-- Row 1: Event Overview and Participation Response -->
 <div class="section detail-grid">
   <div class="card">
-    <h3>参加者一覧</h3>
-    <table>
-      <thead>
-        <tr>
-          <th>名前</th>
-          <th>参加状況</th>
-          <th>車出し</th>
-          <th>乗せられる人数</th>
-          <th>コメント</th>
-        </tr>
-      </thead>
-      <tbody>
-        {% for p in participants %}
-          <tr>
-            <td>{{ p['username'] }}</td>
-            <td>{{ p['status'] }}</td>
-            <td>{% if p['can_drive'] %}<span class="ok">可</span>{% else %}<span class="muted">不可</span>{% endif %}</td>
-            <td>{{ p['seat_count'] or 0 }}</td>
-            <td>{{ p['comment'] or '' }}</td>
-          </tr>
+    <h2>{{ event['title'] }}</h2>
+    <div class="muted">日程: {{ event['event_date'] }}</div>
+    {% if event['recruitment_deadline'] %}
+      <div class="muted">募集締め切り: {{ event['recruitment_deadline'].split('-')[1] }}月{{ event['recruitment_deadline'].split('-')[2] }}日</div>
+    {% endif %}
+    <p>{{ event['summary']|replace('\n', '<br>')|safe }}</p>
+
+    {% if current_user and event['created_by_user_id'] == current_user['id'] %}
+    <div class="actions" style="margin-bottom: 12px;">
+      <a class="btn btn-secondary" href="{{ url_for('events.edit_event', event_id=event['id']) }}">イベントを編集</a>
+
+      <form method="post" action="{{ url_for('events.toggle_event_close', event_id=event['id']) }}" class="inline-form">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+        {% if event['is_closed'] %}
+          <button class="btn btn-secondary" type="submit">募集を再開</button>
         {% else %}
-          <tr>
-            <td colspan="5" class="muted">まだ参加表明はありません。</td>
-          </tr>
-        {% endfor %}
-      </tbody>
-    </table>
+          <button class="btn btn-secondary" type="submit">募集を締め切る</button>
+        {% endif %}
+      </form>
+
+      <form method="post" action="{{ url_for('events.delete_event', event_id=event['id']) }}" class="inline-form" onsubmit="return confirm('このイベントを削除します。参加表明もすべて消えます。よろしいですか？');">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+        <button class="btn btn-danger" type="submit">イベントを削除</button>
+      </form>
+    </div>
+    {% endif %}
+
+    <div class="meta">
+      {% if event['is_closed'] %}
+        <span class="chip chip-danger">募集締切</span>
+      {% else %}
+        <span class="chip chip-ok">募集中</span>
+      {% endif %}
+      <span class="chip">参加 {{ stats['participant_count'] }}人</span>
+      <span class="chip">車の空き <strong>あと {{ stats['available_seats'] }}人</strong> / 合計 {{ stats['total_seats'] }}人分</span>
+      <span class="chip">車出し {{ stats['driver_count'] }}人</span>
+    </div>
+  </div>
+  <div class="card">
+    <h3>概要</h3>
   </div>
 
   <div class="card">
@@ -123,6 +97,37 @@
       </div>
     {% endif %}
   </div>
+</div>
+
+<!-- Row 2: Participants List (Full Width) -->
+<div class="card">
+  <h3>参加者一覧</h3>
+  <table>
+    <thead>
+      <tr>
+        <th>名前</th>
+        <th>参加状況</th>
+        <th>車出し</th>
+        <th>乗せられる人数</th>
+        <th>コメント</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for p in participants %}
+        <tr>
+          <td>{{ p['username'] }}</td>
+          <td>{{ p['status'] }}</td>
+          <td>{% if p['can_drive'] %}<span class="ok">可</span>{% else %}<span class="muted">不可</span>{% endif %}</td>
+          <td>{{ p['seat_count'] or 0 }}</td>
+          <td>{{ p['comment'] or '' }}</td>
+        </tr>
+      {% else %}
+        <tr>
+          <td colspan="5" class="muted">まだ参加表明はありません。</td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
 </div>
 
 <script>
