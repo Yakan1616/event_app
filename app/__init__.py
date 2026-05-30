@@ -24,7 +24,7 @@ def create_app(config_name="development"):
     csrf.init_app(app)
     
     # Initialize database
-    models.init_db(app.config["DB_PATH"])
+    models.init_db(app.config["DATABASE_URL"])
     
     # Register blueprints
     app.register_blueprint(auth_bp, url_prefix="/auth")

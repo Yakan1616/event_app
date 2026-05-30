@@ -13,7 +13,7 @@ def register():
     if request.method == "POST":
         username = request.form["username"].strip()
         password = request.form["password"]
-        db_path = current_app.config["DB_PATH"]
+        db_url = current_app.config["DATABASE_URL"]
 
         if len(username) < 2:
             flash("ユーザー名は2文字以上にしてください。")
@@ -22,12 +22,12 @@ def register():
             flash("パスワードは4文字以上にしてください。")
             return redirect(url_for("auth.register"))
 
-        existing = models.get_user_by_username(db_path, username)
+        existing = models.get_user_by_username(db_url, username)
         if existing:
             flash("そのユーザー名はすでに使われています。")
             return redirect(url_for("auth.register"))
 
-        models.create_user(db_path, username, password)
+        models.create_user(db_url, username, password)
 
         flash("アカウントを作成しました。ログインしてください。")
         return redirect(url_for("auth.login"))
@@ -46,9 +46,9 @@ def login():
     if request.method == "POST":
         username = request.form["username"].strip()
         password = request.form["password"]
-        db_path = current_app.config["DB_PATH"]
+        db_url = current_app.config["DATABASE_URL"]
 
-        user = models.get_user_by_username(db_path, username)
+        user = models.get_user_by_username(db_url, username)
 
         if user is None or not check_password_hash(user["password_hash"], password):
             flash("ユーザー名またはパスワードが違います。")

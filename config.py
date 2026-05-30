@@ -5,7 +5,8 @@ import os
 class Config:
     """Base configuration"""
     SECRET_KEY = os.getenv("SECRET_KEY", "dev-secret-change-me-local-only")
-    DB_PATH = os.getenv("DB_PATH", "circle_events.db")
+    # PostgreSQL接続URL（ローカル開発用、本番はRenderで設定）
+    DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///circle_events.db")
 
 
 class DevelopmentConfig(Config):
@@ -16,7 +17,7 @@ class DevelopmentConfig(Config):
 class ProductionConfig(Config):
     """Production configuration"""
     DEBUG = False
-    SECRET_KEY = "change-this-to-a-secure-key"
+    SECRET_KEY = os.getenv("SECRET_KEY", "change-this-to-a-secure-key")
 
 
 config = {
