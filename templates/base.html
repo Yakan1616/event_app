@@ -299,6 +299,10 @@
       gap: 18px;
       align-items: start;
     }
+    .table-wrapper {
+      overflow-x: auto;
+      margin: 12px 0;
+    }
     @media (max-width: 768px) {
       .title {
         font-size: 20px;
@@ -309,6 +313,7 @@
       .btn {
         padding: 12px 14px;
         font-size: 14px;
+        width: 100%;
       }
       .grid {
         grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
@@ -321,11 +326,27 @@
         padding: 5px 8px;
         font-size: 13px;
       }
+      .detail-grid {
+        grid-template-columns: 1fr;
+      }
       table {
-        font-size: 14px;
+        font-size: 13px;
       }
       th, td {
         padding: 10px 8px;
+      }
+      .actions {
+        flex-direction: column;
+        gap: 8px;
+      }
+      .actions .btn {
+        width: 100%;
+      }
+      .top-actions {
+        flex-direction: column;
+      }
+      .top-actions .btn {
+        width: 100%;
       }
     }
     @media (max-width: 480px) {
@@ -338,6 +359,8 @@
       .btn {
         padding: 12px 10px;
         font-size: 13px;
+        width: 100%;
+        min-height: 48px;
       }
       .grid {
         grid-template-columns: 1fr;
@@ -353,12 +376,39 @@
       .meta {
         gap: 6px;
       }
+      .detail-grid {
+        grid-template-columns: 1fr;
+        gap: 12px;
+      }
       table {
         font-size: 13px;
       }
       th, td {
         padding: 8px 6px;
       }
+      .actions {
+        flex-direction: column;
+        gap: 8px;
+      }
+      .actions .btn {
+        width: 100%;
+        min-height: 48px;
+      }
+      .inline-form {
+        display: block;
+        margin-bottom: 8px;
+      }
+      .inline-form .btn {
+        width: 100%;
+      }
+      input, textarea, select {
+        font-size: 16px;
+        min-height: 48px;
+      }
+      textarea {
+        min-height: 100px;
+      }
+    }
   </style>
   <script>
     function toggleMenu() {
