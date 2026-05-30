@@ -18,15 +18,15 @@ def require_login():
 @events_bp.route("/")
 def index():
     """List all events"""
-    db_path = current_app.config["DB_PATH"]
-    events = models.get_all_events(db_path)
-    cu = current_user(db_path, session)
+    db_url = current_app.config["DATABASE_URL"]
+    events = models.get_all_events(db_url)
+    cu = current_user(db_url, session)
     
     enriched_events = []
     for event in events:
-        stats = event_stats(db_path, event["id"])
+        stats = event_stats(db_url, event["id"])
         # Check if current user has already participated
-        has_participated = models.has_user_participated(db_path, event["id"], cu["id"]) if cu else False
+        has_participated = models.has_user_participated(db_url, event["id"], cu["id"]) if cu else False
         enriched_events.append({**dict(event), **stats, "has_participated": has_participated})
 
     return render_template("index.html", events=enriched_events, current_user=cu)
@@ -38,7 +38,7 @@ def create_event():
     if not require_login():
         return redirect(url_for("auth.login"))
 
-    db_path = current_app.config["DB_PATH"]
+    db_url = current_app.config["DATABASE_URL"]
 
     if request.method == "POST":
         title = request.form["title"].strip()
@@ -50,12 +50,12 @@ def create_event():
             flash("必須項目を入力してください。")
             return redirect(url_for("events.create_event"))
 
-        models.create_event(db_path, title, event_date, summary, session["user_id"], recruitment_deadline)
+        models.create_event(db_url, title, event_date, summary, session["user_id"], recruitment_deadline)
 
         flash("イベントを作成しました。")
         return redirect(url_for("events.index"))
 
-    cu = current_user(db_path, session)
+    cu = current_user(db_url, session)
     return render_template(
         "event_form.html",
         heading="イベントを作成",
@@ -71,8 +71,8 @@ def edit_event(event_id):
     if not require_login():
         return redirect(url_for("auth.login"))
 
-    db_path = current_app.config["DB_PATH"]
-    event = models.get_event_by_id(db_path, event_id)
+    db_url = current_app.config["DATABASE_URL"]
+    event = models.get_event_by_id(db_url, event_id)
 
     if event is None:
         flash("イベントが見つかりません。")
@@ -92,11 +92,11 @@ def edit_event(event_id):
             flash("必須項目を入力してください。")
             return redirect(url_for("events.edit_event", event_id=event_id))
 
-        models.update_event(db_path, event_id, title, event_date, summary, recruitment_deadline)
+        models.update_event(db_url, event_id, title, event_date, summary, recruitment_deadline)
         flash("イベントを更新しました。")
         return redirect(url_for("events.event_detail", event_id=event_id))
 
-    cu = current_user(db_path, session)
+    cu = current_user(db_url, session)
     return render_template(
         "event_form.html",
         heading="イベントを編集",
@@ -109,20 +109,20 @@ def edit_event(event_id):
 @events_bp.route("/events/<int:event_id>")
 def event_detail(event_id):
     """Show event details"""
-    db_path = current_app.config["DB_PATH"]
-    cu = current_user(db_path, session)
+    db_url = current_app.config["DATABASE_URL"]
+    cu = current_user(db_url, session)
 
-    event = models.get_event_by_id(db_path, event_id)
+    event = models.get_event_by_id(db_url, event_id)
     if event is None:
         flash("イベントが見つかりません。")
         return redirect(url_for("events.index"))
 
-    participants = models.get_event_participants(db_path, event_id)
-    stats = event_stats(db_path, event_id)
+    participants = models.get_event_participants(db_url, event_id)
+    stats = event_stats(db_url, event_id)
 
     existing_response = None
     if cu:
-        existing_response = models.get_user_participation(db_path, event_id, cu["id"])
+        existing_response = models.get_user_participation(db_url, event_id, cu["id"])
 
     return render_template(
         "event_detail.html",
@@ -140,26 +140,26 @@ def join_event(event_id):
     if not require_login():
         return redirect(url_for("auth.login"))
 
-    db_path = current_app.config["DB_PATH"]
+    db_url = current_app.config["DATABASE_URL"]
     user_id = session["user_id"]
     status = request.form["status"]
     can_drive = int(request.form.get("can_drive", "0"))
     seat_count = int(request.form.get("seat_count", "0") or 0)
     comment = request.form.get("comment", "").strip()
 
-    event = models.get_event_by_id(db_path, event_id)
+    event = models.get_event_by_id(db_url, event_id)
     if event is None:
         flash("イベントが見つかりません。")
         return redirect(url_for("events.index"))
 
-    existing = models.get_user_participation(db_path, event_id, user_id)
+    existing = models.get_user_participation(db_url, event_id, user_id)
 
     if event["is_closed"] and existing is None:
         flash("このイベントの募集は締め切られています。")
         return redirect(url_for("events.event_detail", event_id=event_id))
 
     models.create_or_update_participation(
-        db_path, event_id, user_id, status, can_drive, seat_count, comment
+        db_url, event_id, user_id, status, can_drive, seat_count, comment
     )
 
     if existing:
@@ -176,8 +176,8 @@ def toggle_event_close(event_id):
     if not require_login():
         return redirect(url_for("auth.login"))
 
-    db_path = current_app.config["DB_PATH"]
-    event = models.get_event_by_id(db_path, event_id)
+    db_url = current_app.config["DATABASE_URL"]
+    event = models.get_event_by_id(db_url, event_id)
 
     if event is None:
         flash("イベントが見つかりません。")
@@ -187,7 +187,7 @@ def toggle_event_close(event_id):
         flash("この操作ができるのは作成者のみです。")
         return redirect(url_for("events.event_detail", event_id=event_id))
 
-    new_value = models.toggle_event_close(db_path, event_id)
+    new_value = models.toggle_event_close(db_url, event_id)
 
     flash("募集を再開しました。" if new_value == 0 else "募集を締め切りました。")
     return redirect(url_for("events.event_detail", event_id=event_id))
@@ -199,8 +199,8 @@ def delete_event(event_id):
     if not require_login():
         return redirect(url_for("auth.login"))
 
-    db_path = current_app.config["DB_PATH"]
-    event = models.get_event_by_id(db_path, event_id)
+    db_url = current_app.config["DATABASE_URL"]
+    event = models.get_event_by_id(db_url, event_id)
 
     if event is None:
         flash("イベントが見つかりません。")
@@ -210,7 +210,7 @@ def delete_event(event_id):
         flash("イベントを削除できるのは作成者のみです。")
         return redirect(url_for("events.event_detail", event_id=event_id))
 
-    models.delete_event(db_path, event_id)
+    models.delete_event(db_url, event_id)
 
     flash("イベントを削除しました。")
     return redirect(url_for("events.index"))
@@ -222,28 +222,28 @@ def my_history():
     if not require_login():
         return redirect(url_for("auth.login"))
 
-    db_path = current_app.config["DB_PATH"]
-    cu = current_user(db_path, session)
+    db_url = current_app.config["DATABASE_URL"]
+    cu = current_user(db_url, session)
     
     # Get ongoing participated events with stats (recruiting and user wants to participate)
-    ongoing_events = models.get_user_ongoing_participated_events(db_path, cu["id"])
+    ongoing_events = models.get_user_ongoing_participated_events(db_url, cu["id"])
     ongoing_with_stats = []
     for event in ongoing_events:
-        stats = event_stats(db_path, event["id"])
+        stats = event_stats(db_url, event["id"])
         ongoing_with_stats.append({**dict(event), **stats})
     
     # Get past participated events with stats (closed events user participated in)
-    past_events = models.get_user_past_participated_events(db_path, cu["id"])
+    past_events = models.get_user_past_participated_events(db_url, cu["id"])
     past_with_stats = []
     for event in past_events:
-        stats = event_stats(db_path, event["id"])
+        stats = event_stats(db_url, event["id"])
         past_with_stats.append({**dict(event), **stats})
     
     # Get created events with stats
-    created_events = models.get_user_created_events(db_path, cu["id"])
+    created_events = models.get_user_created_events(db_url, cu["id"])
     created_with_stats = []
     for event in created_events:
-        stats = event_stats(db_path, event["id"])
+        stats = event_stats(db_url, event["id"])
         created_with_stats.append({**dict(event), **stats})
 
     return render_template(
