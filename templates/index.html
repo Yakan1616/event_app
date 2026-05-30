@@ -21,7 +21,7 @@
           <span class="chip" style="background: #fcd34d; color: #78350f; font-weight: 700;">✓ 回答済み</span>
         {% endif %}
         <span class="chip">参加 {{ event['participant_count'] }}人</span>
-        <span class="chip">車の空き 合計 {{ event['total_seats'] }}人分</span>
+        <span class="chip">車の空き <strong>あと {{ event['available_seats'] }}人</strong> / 合計 {{ event['total_seats'] }}人分</span>
         <span class="chip">車出し {{ event['driver_count'] }}人</span>
       </div>
       <div class="actions">
