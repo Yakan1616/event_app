@@ -1,0 +1,137 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="card">
+  <h2>{{ event['title'] }}</h2>
+  <div class="muted">日程: {{ event['event_date'] }}</div>
+  {% if event['recruitment_deadline'] %}
+    <div class="muted">募集締め切り: {{ event['recruitment_deadline'].split('-')[1] }}月{{ event['recruitment_deadline'].split('-')[2] }}日</div>
+  {% endif %}
+  <p>{{ event['summary']|replace('\n', '<br>')|safe }}</p>
+
+  {% if current_user and event['created_by_user_id'] == current_user['id'] %}
+  <div class="actions" style="margin-bottom: 12px;">
+    <a class="btn btn-secondary" href="{{ url_for('events.edit_event', event_id=event['id']) }}">イベントを編集</a>
+
+    <form method="post" action="{{ url_for('events.toggle_event_close', event_id=event['id']) }}" class="inline-form">
+      {{ csrf_token() }}
+      {% if event['is_closed'] %}
+        <button class="btn btn-secondary" type="submit">募集を再開</button>
+      {% else %}
+        <button class="btn btn-secondary" type="submit">募集を締め切る</button>
+      {% endif %}
+    </form>
+
+    <form method="post" action="{{ url_for('events.delete_event', event_id=event['id']) }}" class="inline-form" onsubmit="return confirm('このイベントを削除します。参加表明もすべて消えます。よろしいですか？');">
+      {{ csrf_token() }}
+      <button class="btn btn-danger" type="submit">イベントを削除</button>
+    </form>
+  </div>
+  {% endif %}
+
+  <div class="meta">
+    {% if event['is_closed'] %}
+      <span class="chip chip-danger">募集締切</span>
+    {% else %}
+      <span class="chip chip-ok">募集中</span>
+    {% endif %}
+    <span class="chip">参加 {{ stats['participant_count'] }}人</span>
+    <span class="chip">車の空き 合計 {{ stats['total_seats'] }}人分</span>
+    <span class="chip">車出し {{ stats['driver_count'] }}人</span>
+  </div>
+</div>
+
+<div class="section detail-grid">
+  <div class="card">
+    <h3>参加者一覧</h3>
+    <table>
+      <thead>
+        <tr>
+          <th>名前</th>
+          <th>参加状況</th>
+          <th>車出し</th>
+          <th>乗せられる人数</th>
+          <th>コメント</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for p in participants %}
+          <tr>
+            <td>{{ p['username'] }}</td>
+            <td>{{ p['status'] }}</td>
+            <td>{% if p['can_drive'] %}<span class="ok">可</span>{% else %}<span class="muted">不可</span>{% endif %}</td>
+            <td>{{ p['seat_count'] or 0 }}</td>
+            <td>{{ p['comment'] or '' }}</td>
+          </tr>
+        {% else %}
+          <tr>
+            <td colspan="5" class="muted">まだ参加表明はありません。</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <div class="card">
+    {% if current_user %}
+      {% if event['is_closed'] and not existing_response %}
+        <h3>参加表明</h3>
+        <p class="muted">このイベントの募集は締め切られています。</p>
+      {% else %}
+        <h3>{% if existing_response %}参加表明を更新{% else %}参加表明{% endif %}</h3>
+        {% if event['is_closed'] %}
+          <div class="notice">このイベントは募集締切済みです。既存の参加表明のみ更新できます。</div>
+        {% endif %}
+        <form method="post" action="{{ url_for('events.join_event', event_id=event['id']) }}">
+          {{ csrf_token() }}
+          <label>
+            ユーザー名
+            <input value="{{ current_user['username'] }}" disabled>
+          </label>
+          <label>
+            参加状況
+            <select name="status" required>
+              <option value="参加希望" {% if existing_response and existing_response['status'] == '参加希望' %}selected{% endif %}>参加希望</option>
+              <option value="未定" {% if existing_response and existing_response['status'] == '未定' %}selected{% endif %}>未定</option>
+              <option value="不参加" {% if existing_response and existing_response['status'] == '不参加' %}selected{% endif %}>不参加</option>
+            </select>
+          </label>
+          <label>
+            車出しできますか？
+            <select name="can_drive" id="can_drive" onchange="toggleSeats()">
+              <option value="0" {% if not existing_response or not existing_response['can_drive'] %}selected{% endif %}>できない</option>
+              <option value="1" {% if existing_response and existing_response['can_drive'] %}selected{% endif %}>できる</option>
+            </select>
+          </label>
+          <label id="seat_wrapper">
+            何人乗せられるか
+            <input type="number" name="seat_count" min="0" value="{{ existing_response['seat_count'] if existing_response else 0 }}">
+          </label>
+          <label>
+            コメント
+            <input name="comment" value="{{ existing_response['comment'] if existing_response and existing_response['comment'] else '' }}" placeholder="集合場所の希望など">
+          </label>
+          <button class="btn" type="submit">{% if existing_response %}更新する{% else %}送信する{% endif %}</button>
+        </form>
+      {% endif %}
+    {% else %}
+      <h3>参加表明にはログインが必要です</h3>
+      <p class="muted">先にアカウントを作成してログインしてください。</p>
+      <div class="actions">
+        <a class="btn" href="{{ url_for('auth.login') }}">ログイン</a>
+        <a class="btn btn-secondary" href="{{ url_for('auth.register') }}">新規登録</a>
+      </div>
+    {% endif %}
+  </div>
+</div>
+
+<script>
+function toggleSeats() {
+  const canDrive = document.getElementById('can_drive');
+  const wrapper = document.getElementById('seat_wrapper');
+  if (!canDrive || !wrapper) return;
+  wrapper.style.display = canDrive.value === '1' ? 'grid' : 'none';
+}
+toggleSeats();
+</script>
+{% endblock %}

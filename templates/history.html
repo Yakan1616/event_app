@@ -1,0 +1,225 @@
+{% extends "base.html" %}
+
+{% block content %}
+<style>
+  .tabs {
+    display: flex;
+    gap: 0;
+    border-bottom: 2px solid var(--line);
+    margin-bottom: 24px;
+  }
+  .tab-button {
+    padding: 14px 20px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-weight: 700;
+    color: var(--muted);
+    border-bottom: 3px solid transparent;
+    margin-bottom: -2px;
+    transition: all 0.2s;
+  }
+  .tab-button.active {
+    color: var(--accent);
+    border-bottom-color: var(--accent);
+  }
+  .tab-button:hover {
+    color: var(--text);
+  }
+  .tab-content {
+    display: none;
+  }
+  .tab-content.active {
+    display: block;
+  }
+  .event-card {
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    padding: 16px;
+    margin-bottom: 12px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.03);
+  }
+  .event-title {
+    font-size: 16px;
+    font-weight: 700;
+    margin: 0 0 8px 0;
+  }
+  .event-info {
+    font-size: 14px;
+    color: var(--muted);
+    margin-bottom: 8px;
+  }
+  .status-badge {
+    display: inline-block;
+    padding: 4px 12px;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 700;
+    margin-right: 6px;
+  }
+  .status-参加希望 {
+    background: var(--ok-bg);
+    color: var(--ok);
+  }
+  .status-未定 {
+    background: var(--warn-bg);
+    color: var(--warn);
+  }
+  .status-不参加 {
+    background: var(--danger-bg);
+    color: var(--danger);
+  }
+  .empty-message {
+    padding: 32px 16px;
+    text-align: center;
+    color: var(--muted);
+    background: var(--card);
+    border-radius: 12px;
+  }
+</style>
+
+<div class="card" style="max-width: 100%; padding: 0;">
+  <div class="tabs">
+    <button class="tab-button active" onclick="switchTab('ongoing')">参加希望中のイベント</button>
+    <button class="tab-button" onclick="switchTab('past')">参加したイベント</button>
+    <button class="tab-button" onclick="switchTab('created')">作成したイベント</button>
+  </div>
+
+  <div style="padding: 20px;">
+    <!-- 参加希望中のイベント -->
+    <div id="ongoing" class="tab-content active">
+      {% if ongoing_events %}
+        {% for event in ongoing_events %}
+          <div class="event-card">
+            <h3 class="event-title">{{ event['title'] }}</h3>
+            <div class="event-info">
+              <strong>日程:</strong> {{ event['event_date'] }}
+            </div>
+            {% if event['recruitment_deadline'] %}
+              <div class="event-info">
+                <strong>募集締め切り:</strong> {{ event['recruitment_deadline'].split('-')[1] }}月{{ event['recruitment_deadline'].split('-')[2] }}日
+              </div>
+            {% endif %}
+            <div class="event-info">
+              <strong>概要:</strong> {{ event['summary']|replace('\n', '<br>')|safe }}
+            </div>
+            <div class="event-info" style="margin-top: 12px;">
+              <strong>参加状況:</strong>
+              <span class="status-badge status-{{ event['status'] }}">{{ event['status'] }}</span>
+              {% if event['can_drive'] %}
+                <span class="chip" style="background: var(--ok-bg); color: var(--ok); font-size: 12px;">🚗 {{ event['seat_count'] }}人乗せられます</span>
+              {% endif %}
+              {% if event['comment'] %}
+                <div class="event-info" style="margin-top: 8px;">
+                  <strong>コメント:</strong> {{ event['comment'] }}
+                </div>
+              {% endif %}
+            </div>
+            <div class="actions" style="margin-top: 12px;">
+              <a class="btn btn-secondary" href="{{ url_for('events.event_detail', event_id=event['id']) }}" style="font-size: 14px; padding: 8px 12px;">詳細を見る</a>
+            </div>
+          </div>
+        {% endfor %}
+      {% else %}
+        <div class="empty-message">
+          <p>参加希望中のイベントはありません。</p>
+        </div>
+      {% endif %}
+    </div>
+
+    <!-- 参加したイベント（過去） -->
+    <div id="past" class="tab-content">
+      {% if past_events %}
+        {% for event in past_events %}
+          <div class="event-card">
+            <h3 class="event-title">{{ event['title'] }}</h3>
+            <div class="event-info">
+              <strong>日程:</strong> {{ event['event_date'] }}
+            </div>
+            {% if event['recruitment_deadline'] %}
+              <div class="event-info">
+                <strong>募集締め切り:</strong> {{ event['recruitment_deadline'].split('-')[1] }}月{{ event['recruitment_deadline'].split('-')[2] }}日
+              </div>
+            {% endif %}
+            <div class="event-info">
+              <strong>概要:</strong> {{ event['summary']|replace('\n', '<br>')|safe }}
+            </div>
+            <div class="event-info" style="margin-top: 12px;">
+              <strong>参加状況:</strong>
+              <span class="status-badge status-{{ event['status'] }}">{{ event['status'] }}</span>
+              {% if event['can_drive'] %}
+                <span class="chip" style="background: var(--ok-bg); color: var(--ok); font-size: 12px;">🚗 {{ event['seat_count'] }}人乗せられました</span>
+              {% endif %}
+              {% if event['comment'] %}
+                <div class="event-info" style="margin-top: 8px;">
+                  <strong>コメント:</strong> {{ event['comment'] }}
+                </div>
+              {% endif %}
+            </div>
+            <div class="actions" style="margin-top: 12px;">
+              <a class="btn btn-secondary" href="{{ url_for('events.event_detail', event_id=event['id']) }}" style="font-size: 14px; padding: 8px 12px;">詳細を見る</a>
+            </div>
+          </div>
+        {% endfor %}
+      {% else %}
+        <div class="empty-message">
+          <p>参加したイベントはまだありません。</p>
+        </div>
+      {% endif %}
+    </div>
+
+    <!-- 作成したイベント -->
+    <div id="created" class="tab-content">
+      {% if created_events %}
+        {% for event in created_events %}
+          <div class="event-card">
+            <h3 class="event-title">{{ event['title'] }}</h3>
+            <div class="event-info">
+              <strong>日程:</strong> {{ event['event_date'] }}
+            </div>
+            {% if event['recruitment_deadline'] %}
+              <div class="event-info">
+                <strong>募集締め切り:</strong> {{ event['recruitment_deadline'].split('-')[1] }}月{{ event['recruitment_deadline'].split('-')[2] }}日
+              </div>
+            {% endif %}
+            <div class="event-info">
+              <strong>概要:</strong> {{ event['summary']|replace('\n', '<br>')|safe }}
+            </div>
+            <div class="event-info" style="margin-top: 12px;">
+              {% if event['is_closed'] %}
+                <span class="chip chip-danger">募集締切</span>
+              {% else %}
+                <span class="chip chip-ok">募集中</span>
+              {% endif %}
+              <span class="chip">参加 {{ event['participant_count'] }}人</span>
+              <span class="chip">車の空き 合計 {{ event['total_seats'] }}人分</span>
+              <span class="chip">車出し {{ event['driver_count'] }}人</span>
+            </div>
+            <div class="actions" style="margin-top: 12px;">
+              <a class="btn btn-secondary" href="{{ url_for('events.event_detail', event_id=event['id']) }}" style="font-size: 14px; padding: 8px 12px;">詳細を見る</a>
+              <a class="btn btn-secondary" href="{{ url_for('events.edit_event', event_id=event['id']) }}" style="font-size: 14px; padding: 8px 12px;">編集</a>
+            </div>
+          </div>
+        {% endfor %}
+      {% else %}
+        <div class="empty-message">
+          <p>作成したイベントはまだありません。</p>
+        </div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+<script>
+function switchTab(tabName) {
+  // Hide all tabs
+  document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+  document.querySelectorAll('.tab-button').forEach(el => el.classList.remove('active'));
+  
+  // Show selected tab
+  document.getElementById(tabName).classList.add('active');
+  event.target.classList.add('active');
+}
+</script>
+{% endblock %}

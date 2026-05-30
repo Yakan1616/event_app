@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="card" style="max-width: 760px; margin: 0 auto;">
+  <h2>{{ heading }}</h2>
+  <form method="post">
+    {{ csrf_token() }}
+    <label>
+      イベント名
+      <input name="title" required placeholder="例: 夏合宿1日目 / 新歓BBQ / 練習会" value="{{ event['title'] if event else '' }}">
+    </label>
+    <label>
+      日程
+      <input type="date" name="event_date" required value="{{ event['event_date'] if event else '' }}">
+    </label>
+    <label>
+      概要
+      <textarea name="summary" required placeholder="集合時間、場所、持ち物、費用など">{{ event['summary'] if event else '' }}</textarea>
+    </label>
+    <label>
+      募集締め切り日（オプション）
+      <input type="date" name="recruitment_deadline" value="{{ event['recruitment_deadline'] if event and event['recruitment_deadline'] else '' }}" placeholder="募集を自動で締め切る日付">
+      <div class="muted" style="font-weight:400; font-size:13px;">
+        ※ 指定した日付に募集は自動で締め切られます。指定しない場合は手動で締め切ることができます。
+      </div>
+    </label>
+    <button class="btn" type="submit">{{ submit_label }}</button>
+  </form>
+</div>
+{% endblock %}
