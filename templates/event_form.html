@@ -4,7 +4,7 @@
 <div class="card" style="max-width: 760px; margin: 0 auto;">
   <h2>{{ heading }}</h2>
   <form method="post">
-    {{ csrf_token() }}
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
     <label>
       イベント名
       <input name="title" required placeholder="例: 夏合宿1日目 / 新歓BBQ / 練習会" value="{{ event['title'] if event else '' }}">

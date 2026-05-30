@@ -14,7 +14,7 @@
     <a class="btn btn-secondary" href="{{ url_for('events.edit_event', event_id=event['id']) }}">イベントを編集</a>
 
     <form method="post" action="{{ url_for('events.toggle_event_close', event_id=event['id']) }}" class="inline-form">
-      {{ csrf_token() }}
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
       {% if event['is_closed'] %}
         <button class="btn btn-secondary" type="submit">募集を再開</button>
       {% else %}
@@ -23,7 +23,7 @@
     </form>
 
     <form method="post" action="{{ url_for('events.delete_event', event_id=event['id']) }}" class="inline-form" onsubmit="return confirm('このイベントを削除します。参加表明もすべて消えます。よろしいですか？');">
-      {{ csrf_token() }}
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
       <button class="btn btn-danger" type="submit">イベントを削除</button>
     </form>
   </div>
@@ -83,7 +83,7 @@
           <div class="notice">このイベントは募集締切済みです。既存の参加表明のみ更新できます。</div>
         {% endif %}
         <form method="post" action="{{ url_for('events.join_event', event_id=event['id']) }}">
-          {{ csrf_token() }}
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
           <label>
             ユーザー名
             <input value="{{ current_user['username'] }}" disabled>
