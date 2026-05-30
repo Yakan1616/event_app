@@ -31,22 +31,23 @@ def event_stats(db_url, event_id):
                 (event_id,)
             ).fetchone()[0]
         else:
-            with conn.cursor() as cur:
-                cur.execute(
-                    "SELECT COUNT(*) FROM participants WHERE event_id = %s AND status = '参加希望'",
-                    (event_id,)
-                )
-                participant_count = cur.fetchone()[0]
-                cur.execute(
-                    "SELECT COALESCE(SUM(seat_count), 0) FROM participants WHERE event_id = %s AND can_drive = 1 AND status = '参加希望'",
-                    (event_id,)
-                )
-                total_seats = cur.fetchone()[0]
-                cur.execute(
-                    "SELECT COUNT(*) FROM participants WHERE event_id = %s AND can_drive = 1 AND status = '参加希望'",
-                    (event_id,)
-                )
-                driver_count = cur.fetchone()[0]
+            cur = conn.cursor()
+            cur.execute(
+                "SELECT COUNT(*) as count FROM participants WHERE event_id = %s AND status = '参加希望'",
+                (event_id,)
+            )
+            participant_count = cur.fetchone()["count"]
+            cur.execute(
+                "SELECT COALESCE(SUM(seat_count), 0) as total FROM participants WHERE event_id = %s AND can_drive = 1 AND status = '参加希望'",
+                (event_id,)
+            )
+            total_seats = cur.fetchone()["total"]
+            cur.execute(
+                "SELECT COUNT(*) as count FROM participants WHERE event_id = %s AND can_drive = 1 AND status = '参加希望'",
+                (event_id,)
+            )
+            driver_count = cur.fetchone()["count"]
+            cur.close()
     finally:
         conn.close()
     
