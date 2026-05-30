@@ -51,8 +51,12 @@ def event_stats(db_url, event_id):
     finally:
         conn.close()
     
+    # Calculate available seats (total seats - current participants)
+    available_seats = max(0, total_seats - participant_count)
+    
     return {
         "participant_count": participant_count,
         "total_seats": total_seats,
+        "available_seats": available_seats,
         "driver_count": driver_count,
     }
